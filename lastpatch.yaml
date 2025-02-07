@@ -1,0 +1,89 @@
+ hosts: all
+#  connection: local # When running locally
+  become: yes
+  gather_facts: no
+  ignore_errors: true
+  order: sorted
+
+  collections:
+    - ansible.builtin
+    - community.general
+
+  vars:
+    # Location for job reports
+    outdir: /tmp/reports
+
+  pre_tasks:
+
+    - name: Create output folder - delegated to localhost - executed once
+      run_once: yes
+      delegate_to: localhost
+      file:
+        path: "{{ outdir }}"
+        state: directory
+
+  tasks:
+
+    - name: check last patch
+      command: bash -c 'dnf history |grep "update" | egrep "2024-12|2025" | head -1'
+      register: cmdoutput
+      ignore_errors: yes
+
+#    - name: print state
+#      debug:
+#        msg: "{{ cmdoutput.stdout_lines }}\n"
+
+
+  post_tasks:
+
+    - name: Save some useful facts under Ansible controller
+      delegate_to: localhost
+      delegate_facts: True
+      run_once: yes
+      # get date, succesful and failed host list and put in facts
+      set_fact:
+        date_str: "{{ date }}_{{ hms }}"
+        date_str_pretty: "{{ date }} {{ hms_pretty }}"
+        success_list: "{{ ansible_play_hosts }}"
+        failed_list: "{{ ansible_play_hosts_all | difference(ansible_play_hosts) }}"
+      vars:
+        date: "{{ '%Y-%m-%d' | strftime }}"
+        hms_pretty: "{{ '%H:%M:%S' | strftime }}"
+        hms: "{{ hms_pretty | replace(':','-') }}"
+
+
+    # Il template Jinja2 è locale per semplicità, uso il modulo apposta.
+    # delegate facts - riceve i facts
+    # run once - ovvio
+    # {% for h in ansible_play_hosts | sort %}                => h in loop per ogni host analizzato
+    # {% if list_output|length > 1 %} ==> Solo se ci sono risultati
+    # {%- set list_output = hostvars[h]['cmdoutput']['stdout'].split('|')  -%}
+    #     => assegna a list_output la lista costruita così:
+    #           hostvars->variabili dell'host ( i facts )i di h ( loop sugli host visitati)::
+    #               variabile cmdoutput ( register  del comando dnf history )::
+    #                   l'output del comando ( stdout )::
+    #                       la lista dell'output (stdout) splittato sul carattere "|"
+    # {% else %} ==> se non ci sono risultati allora stampo no result
+    # NOTA: una variabile va in {{ }} solo se ne viene usato il valore: es in una stringa o in un output
+
+    - name: Report saved in {{ outdir }} on Ansible server
+      delegate_to: localhost
+      delegate_facts: True
+      run_once: yes
+      copy:
+        content: |
+            Report patching {{  hostvars['localhost']['date_str_pretty'] }}
+
+            {% if hostvars['localhost']['failed_list']|length > 0 %}
+            Failed servers {{ hostvars['localhost']['failed_list']|join(',') }}
+            {% endif %}
+
+            {% for h in ansible_play_hosts | sort %}
+            {% set list_output = hostvars[h]['cmdoutput']['stdout'].split('|')  %}
+            {% if list_output|length > 1 %}
+            {{ h }}: Last patch date: {{ list_output[2]|d('no output')|trim  }} Command: " {{ list_output[1]|d('no output')|trim  }}"
+            {% else %}
+            {{ h }}: No result
+            {% endif %}
+            {% endfor %}
+        dest: "{{ outdir }}/patching_report_{{ hostvars['localhost']['date_str'] }}.txt"
