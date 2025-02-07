@@ -69,8 +69,8 @@
       delegate_to: localhost
       delegate_facts: True
       run_once: yes
-      copy:
-        content: |
+      debug:
+        msg: |
             Report patching {{  hostvars['localhost']['date_str_pretty'] }}
 
             {% if hostvars['localhost']['failed_list']|length > 0 %}
@@ -85,4 +85,5 @@
             {{ h }}: No result
             {% endif %}
             {% endfor %}
-        dest: "{{ outdir }}/patching_report_{{ hostvars['localhost']['date_str'] }}.txt"
+        
+    # dest: "{{ outdir }}/patching_report_{{ hostvars['localhost']['date_str'] }}.txt"
