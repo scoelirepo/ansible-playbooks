@@ -8,18 +8,18 @@
     - ansible.builtin
     - community.general
 
-  vars:
+#  vars:
     # Location for job reports
-    outdir: /tmp/reports
+#    outdir: /tmp/reports
 
-  pre_tasks:
-
-    - name: Create output folder - delegated to localhost - executed once
-      run_once: yes
-      delegate_to: localhost
-      file:
-        path: "{{ outdir }}"
-        state: directory
+#  pre_tasks:
+#
+#    - name: Create output folder - delegated to localhost - executed once
+#      run_once: yes
+#      delegate_to: localhost
+#      file:
+#        path: "{{ outdir }}"
+#        state: directory
 
   tasks:
 
