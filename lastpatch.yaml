@@ -1,6 +1,6 @@
 - name: Check last patch date
   hosts: all
-  become: yes
+  become: no
   gather_facts: no
   order: sorted
 
