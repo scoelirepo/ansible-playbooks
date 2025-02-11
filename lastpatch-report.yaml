@@ -1,6 +1,6 @@
 - hosts: all
 #  connection: local # When running locally
-  become: yes
+  become: no
   gather_facts: no
   ignore_errors: true
   order: sorted
