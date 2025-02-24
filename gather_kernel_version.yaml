@@ -2,10 +2,15 @@
 - name: Gather installed kernel versions and generate report
   hosts: all
   gather_facts: yes
+  
   tasks:
     - name: Gather installed kernel versions
       command: rpm -qa | grep kernel
       register: kernel_versions
+
+   - name: Print kernel version
+     debug:
+       msg: {{ kernel_versions.stdout_lines }}
 
     - name: Generate report
       copy:
