@@ -28,9 +28,13 @@
       register: cmdoutput
       ignore_errors: yes
 
+    - name: Save date to a fact
+      set_fact:
+        last_patch_date: "{{ cmdoutput.stdout_lines }}"
+  
     - name: print state
       debug:
-        msg: "{{ cmdoutput.stdout_lines }}\n"
+        var: last_patch_date
 
 
 #  post_tasks:
