@@ -12,17 +12,17 @@
      debug:
        msg: {{ kernel_versions.stdout_lines }}
 
-    - name: Generate report
-      copy:
-        content: |
-          Kernel Versions Report
-          ======================
-          Server: {{ inventory_hostname }}
-          {% for kernel in kernel_versions.stdout_lines %}
-          - {{ kernel }}
-          {% endfor %}
-        dest: /tmp/kernel_versions_report_{{ inventory_hostname }}.txt
+    #- name: Generate report
+    #  copy:
+    #    content: |
+    #      Kernel Versions Report
+    #      ======================
+    #      Server: {{ inventory_hostname }}
+    #      {% for kernel in kernel_versions.stdout_lines %}
+    #      - {{ kernel }}
+    #      {% endfor %}
+    #    dest: /tmp/kernel_versions_report_{{ inventory_hostname }}.txt
 
-    - name: Display report
-      cat:
-      path: /tmp/kernel_versions_report_{{ inventory_hostname }}.txt
+    #- name: Display report
+    #  cat:
+    #  path: /tmp/kernel_versions_report_{{ inventory_hostname }}.txt
