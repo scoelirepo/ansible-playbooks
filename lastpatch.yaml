@@ -30,7 +30,7 @@
 
     - name: Save date to a fact
       set_fact:
-        last_patch_date: "ITEM: {{ ansible_hostname }} {{ cmdoutput.stdout_lines }}"
+        last_patch_date: "ITEM: {{ inventory_hostname }} {{ cmdoutput.stdout_lines }}"
   
     - name: print state
       debug:
