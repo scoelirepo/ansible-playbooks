@@ -1,7 +1,7 @@
 - name: Check last patch date
   hosts: all
   become: yes
-  gather_facts: no
+  gather_facts: yes
 #  order: sorted
 
   collections:
