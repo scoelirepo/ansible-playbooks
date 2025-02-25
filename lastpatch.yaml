@@ -1,6 +1,6 @@
 - name: Check last patch date
   hosts: all
-  become: no
+  become: yes
   gather_facts: no
 #  order: sorted
 
@@ -25,12 +25,19 @@
 
     - name: check last patch
       command: bash -c 'dnf history |grep "update" | egrep "2024-12|2025" | head -1'
-      register: cmdoutput
+      register: last_patch
       ignore_errors: yes
+
+    - name: check last reboot
+      command: bash -c 'last reboot | head -1'
+      register: last_reboot
+      ignore_errors: yes
+
+
 
     - name: Save date to a fact
       set_fact:
-        last_patch_date: "ITEM: {{ inventory_hostname }} {{ cmdoutput.stdout_lines }}"
+        last_patch_date: "ITEM: {{ inventory_hostname }} last patch: {{ last_patch.stdout_lines }}  last reboot {{ last_reboot.stdout_lines }}"
   
     - name: print state
       debug:
