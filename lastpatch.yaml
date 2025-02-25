@@ -22,11 +22,19 @@
 #        state: directory
 
   tasks:
-
+    
     - name: check last patch
       command: bash -c 'dnf history |grep "update" | egrep "2024-12|2025" | head -1'
       register: last_patch
-      ignore_errors: yes
+      when: ansible_facts['ansible_distribution'] == 'RedHat'
+
+
+    - name: check last patch
+      command: bash -c 'grep "update" /var/log/zypp/history | tail -1'
+      register: last_patch
+      when: ansible_facts['ansible_distribution'] == 'SUSE'
+
+
 
     - name: check last reboot
       command: bash -c 'last reboot | head -1'
