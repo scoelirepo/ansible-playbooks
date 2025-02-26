@@ -4,6 +4,7 @@
   gather_facts: yes
   
   tasks:
+  
     - name: Gather installed kernel versions
       command: rpm -qa | grep kernel
       register: kernel_versions
