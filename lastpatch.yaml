@@ -28,13 +28,19 @@
       when: ansible_distribution == "SLES_SAP"
 
 
-    - name: check last reboot
-      shell: last reboot | grep wtmp | head -1
-      register: last_reboot
+    #- name: check last reboot
+    #  shell: last reboot | egrep "wtmp|reboot" | head -1
+    #  register: last_reboot
 
-    - name: set variable for last reboot
+    - name: check uptime
+      shell: uptime | cut -d "," -f 1 | cut -d " " -f 3-
+      register: check_uptime
+
+
+    - name: set variable for uptime
       set_fact:
-        LAST_REBOOT_OUT: "{{ last_reboot.stdout_lines }}"
+        LAST_REBOOT_OUT: "{{ check_uptime.stdout_lines }}"
+        #LAST_REBOOT_OUT: "{{ last_reboot.stdout_lines }}"
 
     - name: print state
       debug:
