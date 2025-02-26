@@ -18,7 +18,8 @@
 
     - name: check last patch SLES
     # command: bash -c 'fgrep \'update\' /var/log/zypp/history | tail -1'
-      shell: "grep \"'update'\"  /var/log/zypp/history | tail -1"
+    # shell: "grep \"'update'\"  /var/log/zypp/history | tail -1"
+      shell: zypper-log | grep " patch " | tail -1"
       register: last_patch
       when: ansible_distribution == "SLES_SAP"
 
