@@ -3,106 +3,44 @@
   become: yes
   gather_facts: yes
 #  order: sorted
-
-  collections:
-    - ansible.builtin
-    - community.general
-
-#  vars:
-    # Location for job reports
-#    outdir: /tmp/reports
-
-#  pre_tasks:
-#
-#    - name: Create output folder - delegated to localhost - executed once
-#      run_once: yes
-#      delegate_to: localhost
-#      file:
-#        path: "{{ outdir }}"
-#        state: directory
+- hosts: all
+#  connection: local # When running locally
+  become: no
+  gather_facts: yes
+  ignore_errors: true
 
   tasks:
-    
-    - name: check last patch
+
+    - name: check last patch for RedHat
       command: bash -c 'dnf history |grep "update" | egrep "2024-12|2025" | head -1'
       register: last_patch
-      when: ansible_facts['ansible_distribution'] == 'RedHat'
+      when: ansible_distribution == "RedHat"
+
+    - name: set variable for RedHat
+      set_fact:
+        LAST_PATCH_OUT: "{{ last_patch.stdout_lines }}"
+      when: ansible_distribution == "RedHat"
 
 
-    - name: check last patch
-      command: bash -c 'grep "update" /var/log/zypp/history | tail -1'
+    - name: check last patch SLES
+      shell: grep "'update'" /var/log/zypp/history | tail -1
       register: last_patch
-      when: ansible_facts['ansible_distribution'] == 'SUSE'
+      when: ansible_distribution == "SLES_SAP"
 
+    - name: set variable for SLES
+      set_fact:
+        LAST_PATCH_OUT: "{{ last_patch.stdout_lines }}"
+      when: ansible_distribution == "SLES_SAP"
 
 
     - name: check last reboot
-      command: bash -c 'last reboot | head -1'
+      shell: last reboot | grep wtmp | head -1
       register: last_reboot
-      ignore_errors: yes
 
-
-
-    - name: Save date to a fact
+    - name: set variable for last reboot
       set_fact:
-        last_patch_date: "ITEM: {{ inventory_hostname }} last patch: {{ last_patch.stdout_lines }}  last reboot {{ last_reboot.stdout_lines }}"
-  
+        LAST_REBOOT_OUT: "{{ last_reboot.stdout_lines }}"
+
     - name: print state
       debug:
-        var: last_patch_date
-
-
-#  post_tasks:
-#
-#   - name: Save some useful facts under Ansible controller
-#     delegate_to: localhost
-#     delegate_facts: True
-#     run_once: yes
-#     # get date, succesful and failed host list and put in facts
-#      set_fact:
-#        date_str: "{{ date }}_{{ hms }}"
-#        date_str_pretty: "{{ date }} {{ hms_pretty }}"
-#        success_list: "{{ ansible_play_hosts }}"
-#        failed_list: "{{ ansible_play_hosts_all | difference(ansible_play_hosts) }}"
-#      vars:
-#        date: "{{ '%Y-%m-%d' | strftime }}"
-#        hms_pretty: "{{ '%H:%M:%S' | strftime }}"
-#        hms: "{{ hms_pretty | replace(':','-') }}"
-
-
-    # Il template Jinja2 è locale per semplicità, uso il modulo apposta.
-    # delegate facts - riceve i facts
-    # run once - ovvio
-    # {% for h in ansible_play_hosts | sort %}                => h in loop per ogni host analizzato
-    # {% if list_output|length > 1 %} ==> Solo se ci sono risultati
-    # {%- set list_output = hostvars[h]['cmdoutput']['stdout'].split('|')  -%}
-    #     => assegna a list_output la lista costruita così:
-    #           hostvars->variabili dell'host ( i facts )i di h ( loop sugli host visitati)::
-    #               variabile cmdoutput ( register  del comando dnf history )::
-    #                   l'output del comando ( stdout )::
-    #                       la lista dell'output (stdout) splittato sul carattere "|"
-    # {% else %} ==> se non ci sono risultati allora stampo no result
-    # NOTA: una variabile va in {{ }} solo se ne viene usato il valore: es in una stringa o in un output
-
- #   - name: Report saved in {{ outdir }} on Ansible server
- #     delegate_to: localhost
- #     delegate_facts: True
- #     run_once: yes
- #     debug:
- #       msg: |
- #           Report patching {{  hostvars['localhost']['date_str_pretty'] }}
-
- #           {% if hostvars['localhost']['failed_list']|length > 0 %}
- #           Failed servers {{ hostvars['localhost']['failed_list']|join(',') }}
- #           {% endif %}
-
- #           {% for h in ansible_play_hosts | sort %}
- #           {% set list_output = hostvars[h]['cmdoutput']['stdout'].split('|')  %}
- #           {% if list_output|length > 1 %}
- #           {{ h }}: Last patch date: {{ list_output[2]|d('no output')|trim  }} Command: " {{ list_output[1]|d('no output')|trim  }}"
- #           {% else %}
- #           {{ h }}: No result
- #           {% endif %}
- #           {% endfor %}
-        
-    # dest: "{{ outdir }}/patching_report_{{ hostvars['localhost']['date_str'] }}.txt"
+        msg: "ITEM: {{ inventory_hostname }} last patch: {{ LAST_PATCH_OUT }}  last reboot {{ LAST_REBOOT_OUT }}"
